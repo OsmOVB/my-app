@@ -1,31 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { createTablePet, fetchUser } from '../src/database';  // Certifique-se de ajustar o caminho para o arquivo correto
+import { insertUser, createTableUser } from '../src/database';
 
-const LoginScreen = () => {
+const SignUpScreen = () => {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
-
-    useEffect(() => {
-        const initializeDatabase = async () => {
-            try {
-                await createTablePet();  // Garante que a tabela "pets" seja criada
-                console.log('Tabela "pets" criada com sucesso.');
-            } catch (error) {
-                console.error('Erro ao criar a tabela "pets":', error);
-            }
-        };
-        initializeDatabase();
-    }, []);
 
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(String(email).toLowerCase());
     };
 
-    const handleLogin = async () => {
+    const handleSignUp = async () => {
         if (!validateEmail(email)) {
             Alert.alert('Erro', 'Por favor, insira um email válido.');
             return;
@@ -37,27 +26,27 @@ const LoginScreen = () => {
         }
 
         try {
-            const user = await fetchUser(email, password);
-            if (user) {
-                router.push('../../screens/PetListScreen');
-                createTablePet(); // Certifique-se de que a tabela de bichinhos existe
-            } else {
-                Alert.alert('Erro', 'Credenciais inválidas.');
-            }
+            await createTableUser(); // Garante que a tabela de usuários exista
+            await insertUser(username, email, password);
+            Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+            router.push('./LoginScreen'); // Navega de volta para a tela de login
         } catch (error) {
             console.error(error);
-            Alert.alert('Erro', 'Ocorreu um erro ao tentar fazer login.');
+            Alert.alert('Erro', 'Ocorreu um erro ao tentar cadastrar o usuário.');
         }
-    };
-
-    const handleSignUpNavigation = () => {
-        router.push('../../screens/SignUpScreen'); // Navega para a tela de cadastro
     };
 
     return (
         <View style={styles.container}>
-            <Image source={require('../../assets/images/01.png')} style={styles.image} />
-            <Text style={styles.title}>Bem-vindo ao Tamagochi</Text>
+            <Text style={styles.title}>Cadastro</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Nome de usuário"
+                placeholderTextColor="#999999"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+            />
             <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -75,11 +64,8 @@ const LoginScreen = () => {
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSignUpNavigation}>
-                <Text style={styles.signUpText}>Não tem uma conta? Cadastre-se</Text>
+            <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+                <Text style={styles.buttonText}>Cadastrar</Text>
             </TouchableOpacity>
         </View>
     );
@@ -92,11 +78,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#1A1A1A',
         padding: 20,
-    },
-    image: {
-        width: 150,
-        height: 150,
-        marginBottom: 20,
     },
     title: {
         fontSize: 24,
@@ -125,11 +106,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    signUpText: {
-        color: '#FFA500',
-        marginTop: 20,
-        textDecorationLine: 'underline',
-    },
 });
 
-export default LoginScreen;
+export default SignUpScreen;
